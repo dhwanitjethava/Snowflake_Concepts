@@ -12,7 +12,7 @@ CREATE OR REPLACE FILE FORMAT <file_format_name>
 
 -- Create table
 CREATE OR REPLACE TABLE <table_name> (
-    RAW_FILEVARIANT
+    RAW_FILE VARIANT
     );
 
 -- Load raw data
