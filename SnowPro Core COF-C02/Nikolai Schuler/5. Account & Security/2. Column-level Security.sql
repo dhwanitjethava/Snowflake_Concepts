@@ -1,0 +1,72 @@
+---- DYNAMIC DATA MASKING ----
+
+USE ROLE ACCOUNTADMIN;
+CREATE OR REPLACE DATABASE DEMO_DB;
+
+-- Prepare table
+CREATE OR REPLACE TABLE DEMO_DB.PUBLIC.CUSTOMERS (
+    id NUMBER,
+    full_name VARCHAR, 
+    email VARCHAR,
+    phone VARCHAR,
+    spent NUMBER,
+    create_date DATE DEFAULT CURRENT_DATE
+    );
+
+-- Insert values in table
+INSERT INTO CUSTOMERS (id, full_name, email, phone, spent)
+VALUES
+    (1,'Lewiss MacDwyer','lmacdwyer0@un.org','262-665-9168',140),
+    (2,'Ty Pettingall','tpettingall1@mayoclinic.com','734-987-7120',254),
+    (3,'Marlee Spadazzi','mspadazzi2@txnews.com','867-946-3659',120),
+    (4,'Heywood Tearney','htearney3@patch.com','563-853-8192',1230),
+    (5,'Odilia Seti','oseti4@globo.com','730-451-8637',143),
+    (6,'Meggie Washtell','mwashtell5@rediff.com','568-896-6138',600);
+
+SELECT * FROM DEMO_DB.PUBLIC.CUSTOMERS;
+
+-- Set up roles
+CREATE OR REPLACE ROLE ANALYST_MASKED;
+CREATE OR REPLACE ROLE ANALYST_FULL;
+
+-- Grant usage on database
+GRANT USAGE ON DATABASE DEMO_DB TO ROLE ANALYST_MASKED;
+GRANT USAGE ON DATABASE DEMO_DB TO ROLE ANALYST_FULL;
+
+-- Grant usage on schema
+GRANT USAGE ON SCHEMA DEMO_DB.PUBLIC TO ROLE ANALYST_MASKED;
+GRANT USAGE ON SCHEMA DEMO_DB.PUBLIC TO ROLE ANALYST_FULL;
+
+-- Grant select on table
+GRANT SELECT ON TABLE DEMO_DB.PUBLIC.CUSTOMERS TO ROLE ANALYST_MASKED;
+GRANT SELECT ON TABLE DEMO_DB.PUBLIC.CUSTOMERS TO ROLE ANALYST_FULL;
+
+-- Grant warehouse access to roles
+GRANT USAGE ON WAREHOUSE COMPUTE_WH TO ROLE ANALYST_MASKED;
+GRANT USAGE ON WAREHOUSE COMPUTE_WH TO ROLE ANALYST_FULL;
+
+-- Set up masking policy
+CREATE OR REPLACE MASKING POLICY DEMO_DB.PUBLIC.PHONE 
+    AS (val VARCHAR) RETURNS VARCHAR ->
+            CASE
+                WHEN CURRENT_ROLE() IN ('ANALYST_FULL', 'ACCOUNTADMIN') THEN val
+                ELSE '##-###-##'
+            END;
+
+-- Apply policy on a specific column 
+ALTER TABLE IF EXISTS DEMO_DB.PUBLIC.CUSTOMERS MODIFY COLUMN phone 
+    SET MASKING POLICY DEMO_DB.PUBLIC.PHONE;
+
+-- Validating policies
+USE ROLE ANALYST_FULL;
+SELECT * FROM CUSTOMERS;
+
+USE ROLE ANALYST_MASKED;
+SELECT * FROM CUSTOMERS;
+
+ALTER MASKING POLICY phone
+SET BODY ->
+        CASE        
+            WHEN CURRENT_ROLE() IN ('ANALYST_FULL', 'ACCOUNTADMIN') THEN val
+            ELSE CONCAT(LEFT(val,1),'##-###-##')
+        END;
