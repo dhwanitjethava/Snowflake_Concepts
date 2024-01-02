@@ -10,7 +10,7 @@
 --    - Automatically once they are added to stages
 --    - Lates results for analysis
 --    - Snowpipe (Serverless feature)
--- delete this line
+
 -----------------------------------------------------------------------------------------------------------------------
 
 -- Stages: Location of data files where data can be loaded from (not confused with data warehouse stages).
