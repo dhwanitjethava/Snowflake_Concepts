@@ -101,7 +101,7 @@ SELECT * FROM <stream_table>;
 
 -- Now Merge that stream object data to target table using stream object as follow:
 MERGE INTO <target_table>       -- Target table to merge changes from source table
-USING (SELECT <stream_table>.*, <source_table>.column1, <source_table>.column2
+USING (SELECT <stream_table>.*
        FROM <stream_table>
        JOIN <source_table>
        ON <stream_table>.ID = <source_table>.ID
